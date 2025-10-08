@@ -2,18 +2,98 @@
 title: "p8105_hw3_hc3671"
 author: "Barry"
 date: "2025-10-06"
-output: html_document
+output: github_document
 ---
 
 ## Problem 1
 
-Loading data:
+Loading data and set options:
 
 ```{r}
 library(p8105.datasets)
+
+library(tidyverse)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+
 data("instacart")
-instacart = instacart
+
+instacart = janitor::clean_names(instacart)
+
+instacart |> 
+  count(department, name = "number") |>  # not gonna show results here for aes
+  mutate(max_department = department[which.max(number)], min_department = department[which.min(number)])
+num_customers = n_distinct(instacart$user_id)
+mean_day_since_last_order = mean(instacart$days_since_prior_order)
+max_dow = names(which.max(table(instacart$order_dow)))
+min_dow = names(which.min(table(instacart$order_dow)))
+total_product_number = sum(unique(instacart$product_id))
+num_reorder = sum(instacart$reordered)
+num_orderfirst = sum(1 - instacart$reordered)
 
 ```
+
+I made a look at the whole data set, this is a data about information on grocery orders on the Instacart online grocery platform in the United States. It has 15 variables in total.
+Key variables include:
+`order_id`: Unique identifier for each order.
+`user_id`: Identifier for the customer.
+`product_id` and `product_name`: Identifier for the purchased item.
+`department` and `aisle`: Categorical variables of the products.
+`order_dow` and `order_hour_of_day`: Day of the week and hour of the orders.
+`days_since_prior_order`: Number of days since the user’s previous order.
+`reordered`: A binary indicator indicates whether the user has purchased this product before (0/1).
+
+I made some basic statistical tests like: there are `r num_customers` customers and `r total_product_number` products involved in this data, the mean of the days_since_prior_order is `r mean_day_since_last_order`, the max order_dow is `r max_dow`, the minimum order_dow is `r min_dow`, the number of reodered cases is `r num_reorder`, while there are `r num_orderfirst` customers that order online for the first time.
+
+Next, I am gonna answer the questions listed in question 1:
+
+(a). How many aisles are there, and which aisles are the most items ordered from?
+
+```{r echo = FALSE}
+
+instacart |> 
+  summarize(
+    num_aisle = n_distinct(aisle),
+    most_ordered_aisle = aisle[which.max(num_aisle)]
+  )
+```
+
+There are 134 aisles, and yogurts are the most items.
+
+(b). Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with more than 10000 items ordered. Arrange aisles sensibly, and organize your plot so others can read it.
+
+```{r}
+instacart |> 
+  count(aisle, name = "num_aisle") |> 
+  filter(num_aisle >= 10000) |>  
+  ggplot(aes(x = aisle, y = num_aisle)) +
+  geom_col() + 
+  coord_flip() +
+  labs(
+    x = "Aisle",
+    y = "Number of items ordered",
+    title = "the number of items ordered in each aisle "
+  ) +
+  scale_y_continuous(trans = "sqrt")
+  
+  
+```
+
+
+
 
 
