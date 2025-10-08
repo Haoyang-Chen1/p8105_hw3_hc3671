@@ -1,0 +1,19 @@
+---
+title: "p8105_hw3_hc3671"
+author: "Barry"
+date: "2025-10-06"
+output: html_document
+---
+
+## Problem 1
+
+Loading data:
+
+```{r}
+library(p8105.datasets)
+data("instacart")
+instacart = instacart
+
+```
+
+
