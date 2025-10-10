@@ -8,6 +8,16 @@ output: github_document
 ## Problem 1
 
 Loading data and set options:
+```{r}
+knitr::opts_chunk$set(
+  fig.path   = "plots/",   
+  fig.width  = 12, fig.height = 8,
+  dpi        = 320,
+  fig.retina = 2,            
+  dev        = "png"       
+)
+```
+
 
 ```{r}
 library(p8105.datasets)
