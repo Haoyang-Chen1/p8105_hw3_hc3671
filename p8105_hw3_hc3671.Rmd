@@ -294,16 +294,113 @@ paticipant_df =
   read_csv("https://p8105.com/data/nhanes_covar.csv", skip = 4) 
 accelerometer_df = 
   read_csv("https://p8105.com/data/nhanes_accel.csv")
+
 nhanes = 
   left_join(
     paticipant_df,
     accelerometer_df,
     by = "SEQN"
+  ) |> 
+  drop_na() |> 
+  filter(age >= 21) |> 
+  mutate(
+    age = as.integer(age),
+    education = as.factor(education),
+    sex = 
+      case_match(
+        sex, 
+        1 ~ "male", 
+        2 ~ "female")
   )
+```
+
+(a). Produce a reader-friendly table for the number of men and women in each education category, and create a visualization of the age distributions for men and women in each education category. Comment on these items.
+
+```{r}
+# plot of the number of men and women in each education category
+nhanes |> 
+  count(education, sex, name = "population") |> 
+  pivot_wider(
+    names_from = sex,
+    values_from = population
+  )
+
+# visualization
+
+nhanes |> 
+  ggplot(aes(x = age, fill = sex)) +
+  geom_density(alpha = .5) +
+  facet_grid(~education) +
+  viridis::scale_fill_viridis(discrete = TRUE)
 
 
 ```
 
+From the plot, for education level 1, makes and females are basically the same. For education level 2, males have a larger part of the younger age than females, and for education level 3, females' population has a heavier density around age of 30.
+
+(b). Traditional analyses of accelerometer data focus on the total activity over the day. Using your tidied dataset, aggregate across minutes to create a total activity variable for each participant. Plot these total activities (y-axis) against age (x-axis); your plot should compare men to women and have separate panels for each education level. Include a trend line or a smooth to illustrate differences. Comment on your plot.
+
+```{r}
+nhanes_activity  =
+  nhanes |>
+  mutate(total = rowSums(select(nhanes , min1:min1440), na.rm = TRUE))
+
+nhanes_activity |> 
+  ggplot(aes(x = age, y = total, color = sex)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE, size = 1.2) +
+  facet_grid(~ education) +
+  labs(
+    title = "Total Daily Activity vs Age by Sex and Educational level",
+    x = "Age", y = "Total Daily Activity"
+  ) 
+
+```
+
+For education level 1, female has more daily activity than male before 40, and then change after 40, with a peak for male aged 60. \
+For education level 2, female' total daily activity is more than male's almost among all age, with a peak in 40 and 70 in both make and female. \
+For education level 3, male and female's total daily activity pattern are almost the same. But the line shows that female still has more total daily activity than male.
+
+(c). Accelerometer data allows the inspection activity over the course of the day. Make a three-panel plot that shows the 24-hour activity time courses for each education level and use color to indicate sex. Describe in words any patterns or conclusions you can make based on this graph; including smooth trends may help identify differences.
+
+```{r}
+
+nhanes |> 
+  pivot_longer(
+     min1:min1440,
+     names_to = "time",
+     values_to = "mims"
+  ) |> 
+  mutate(
+    time = parse_number(time) / 1440 *24,
+  ) |> 
+  group_by(education, sex, time) |> 
+  summarise(
+    mean_mims = mean(mims)
+  ) |> 
+  ggplot(aes(x = time, y = mean_mims, color = sex)) +
+  geom_point(alpha = .5, size = .3) +
+  geom_smooth(se = FALSE) + 
+  scale_x_continuous(
+    limits = c(0, 24),
+    breaks = seq(0, 24, by = 1)) +
+  facet_grid(education ~.) +
+  labs(
+    title = "24-Hour Activity",
+    x = "Time of Day (minute)",
+    y = "Mean MIMS"
+  )
+  theme(legend.position = "bottom")
+
+```
+
+The general pattern (of all the educational level), the activity follows a clear circadian rhythm:
+Lowest level during the night (roughly 0-6 am),
+A sudden increase after waking (around 6–8 am),
+Peak activity sustained throughout the daytime (10 am–5 pm),
+Gradual decline into the evening hours (after 8 pm).
+
+Then, let group 1,2,3 denotes different educational levels of people. Group 1 reaches the peak about two hours later than the other two groups. And group 3's pattern is flatter during the peak activity period than others and turns to decline sharper after work (around 7 pm). It seems that group two has a large variance of MIMS almost the daytime. And there is almost the same pattern of males and females.
 
 
 
